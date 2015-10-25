@@ -1,0 +1,17 @@
+{
+    "contents" : "library(\"ggplot2\")\nlibrary(\"reshape2\")\nlibrary(\"stringr\")  # Library to strip the string\nlibrary(\"plyr\")\n\nns <- read.csv(\"NS.csv\")  # Reading the CSV\n\n# Computing Days with Number of News Pages\n\nnewsPages <- data.frame(ns$Date, ns$Full.Page.Ads, I(ns$Total.Pages - ns$Full.Page.Ads))\nnewsHeading <- c(\"Date\", \"FullPageAds\", \"NewsPages\")  # Renaming the columns\nnames(newsPages) <- newsHeading\nnewsPages2 <- melt(newsPages)\nggplot(data = newsPages2, aes(x = Date, y = value, fill = variable)) +\n  geom_bar(stat = \"identity\") +\n  ylab(\"Number of Pages\") +\n  scale_fill_manual(values = c(\"#E24139\", \"#158504\"),\n                    name = \"Pages Composition\",\n                    breaks = c(\"FullPageAds\", \"NewsPages\"),\n                    labels = c(\"Full Page Ads\", \"Pages with News\")) +\n  theme(panel.background = element_blank()) + # No background\n  coord_flip()\n\n# Companies mostly taking the front page\n\ncompanies <- ns$Front.Page.Ad.By  # Getting all the companies\ncompanies2 <- strsplit(as.character(companies), \",\", fixed=TRUE)  # Splitting the Companies\n\nallCompanies <- vector(mode=\"numeric\", 0)  # Empty Vector to store companies\n\n# Loop to get all the companies indivually \nfor (i in 1:length(companies2)){\n  for (o in 1:length(companies2[[i]])){\n    allCompanies <- c(allCompanies, str_trim(companies2[[i]][o]))\n  }\n}\n\n",
+    "created" : 1445775696824.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3602161333",
+    "id" : "B89A21DA",
+    "lastKnownWriteTime" : 1445777541,
+    "path" : "~/Analysis/Newspaper Ads Analysis/Analysis.R",
+    "project_path" : "Analysis.R",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}
