@@ -6,8 +6,8 @@ attach(data)
 location <- count(Location, "Location")  # To count the states
 ggplot(location, aes(x=Location, y=freq, ymax=max(location$freq))) + 
   geom_bar(stat="identity", width=0.8, fill="#e67e22") + 
-  xlab("States") + 
-  ggtitle("States graph for Jagriti Yatra") +  # Title of the graph
+  xlab("States/Countries") + 
+  ggtitle("Jagriti Yatra Analysis") +  # Title of the graph
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
   panel.grid.minor = element_blank(), 
   panel.border=element_blank(), 
