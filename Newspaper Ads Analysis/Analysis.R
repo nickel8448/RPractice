@@ -17,6 +17,7 @@ themefunc <- function()
   return(themev)
 }
 
+#####
 # Make a new data frame
 newsPages <- data.frame(ns$Date, ns$Full.Page.Ads, I(ns$Total.Pages - ns$Full.Page.Ads))
 # Rename the Columns
@@ -35,13 +36,15 @@ ggplot(data = newsPages2, aes(x = Date, y = value, fill = variable)) +
                     name = "Pages Composition",  # Name of the Graph
                     breaks = c("FullPageAds", "NewsPages"),  # Name of the legend
                     labels = c("Full Page Ads", "Pages with News")) +  # Changing the legend
+  scale_y_continuous(breaks = round(seq(0, max(30), by=5))) +
   geom_text(aes(y=label_y, label=value), vjust=0.5, color='white', fontface=1, size=3) +  # Putting the labels
   themefunc() +
-  coord_flip()  # Flipping the graph
+  coord_flip() +  # Flipping the graph
+  ggsave("Ads.png", dpi=300) 
 
-#######
+#####
 
-# Weeks and Numbers of ads for every week day
+# Weeks and Numbers of ads for every week day Variable Programming
 
 AllDayAds <- data.frame(ns$Full.Page.Ads, ns$Day, ns$Total.Pages)
 days <- vector(mode = "character", length=0)
@@ -70,12 +73,16 @@ for (i in 1:nrow(AllDayAds))
 {
   if (as.character(AllDayAds[i, 1]) == "Friday")
   {
-    AllDayAds[i, 2] = AllDayAds[i, 2] + (AllDayAds[i, 2]/3)
-    AllDayAds[i, 3] = AllDayAds[i, 3] + (AllDayAds[i, 3]/3)
+    AllDayAds[i, 2] = round(AllDayAds[i, 2] + (AllDayAds[i, 2]/3), 0)
+    AllDayAds[i, 3] = round(AllDayAds[i, 3] + (AllDayAds[i, 3]/3), 0)
   }
-  AllDayAds[i, 2] = AllDayAds[i, 2] / 4
-  AllDayAds[i, 3] = AllDayAds[i, 3] / 4
+  AllDayAds[i, 2] = round(AllDayAds[i, 2] / 4, 0)
+  AllDayAds[i, 3] = round(AllDayAds[i, 3] / 4, 0)
 }
+
+#####
+
+# Days of Week and Numbers of ads for every week day Plotting
 
 meltedAllDayAds <- melt(AllDayAds)
 meltedAllDayAds <- ddply(meltedAllDayAds, "WDay", mutate, label_y = cumsum(value) - .5*value)
@@ -83,14 +90,16 @@ ggplot(meltedAllDayAds, aes(x = WDay, y = value, fill = variable)) +
   geom_bar(stat = "identity") +
   ylab("Total Pages") +
   xlab("Day of the Week") +
-  scale_fill_manual(values = c("#E24139", "#158504"),  # Chaning the colour of the bars
+  scale_fill_manual(values = c("#E24139", "#158504"),  # Changing the colour of the bars
                     name = "Pages Composition",
                     breaks = c("Pages", "TotalPages"),
                     labels = c("Full Page Ads", "Pages with News")) + 
   geom_text(aes(y=label_y, label=value), vjust=0.5, color='white', fontface=1, size=5) +  # Putting the labels
-  themefunc() 
+  themefunc() +
+  ggsave('Days.png', dpi=300)
 
-######
+#####
+
 # Companies mostly taking the front page
 
 companiesFunction <- function(Variable)
@@ -139,7 +148,7 @@ companiesFunction <- function(Variable)
   }
 
   CompaniesCount <- data.frame(cname, cvalue)
-  names(CompaniesCount) <- c("CompanyName", "Occurrence")
+  names(CompaniesCount) <- c("CompanyName", "Occurrence")  # Putting a name to the data frame
   levels(CompaniesCount$CompanyName) <- gsub(" ", "\n", levels(CompaniesCount$CompanyName))  # To put a line break in the company names
   return (CompaniesCount)
   
@@ -148,11 +157,45 @@ companiesFunction <- function(Variable)
 FrontPageComp <- companiesFunction("Front.Page.Ad.By")
 FullPageComp <- companiesFunction("Full.Page.Ads.By")
 
-ggplot(data = CompaniesCount, aes(x = reorder(CompanyName, Occurrence), y = Occurrence, ymax=max(Occurrence))) + 
+# Plotting for Companies which gives ads on Front Page
+ggplot(data = FrontPageComp, aes(x = reorder(CompanyName, Occurrence), y = Occurrence, ymax=max(Occurrence))) + 
     scale_y_continuous(breaks = round(seq(0, max(30), by=2))) + 
     themefunc() + 
     xlab("Companies") +
     ylab("Number of times Ad Occurred") +
     ggtitle("Frequency of various Companies occurring on 1st Page") +
     geom_text(aes(label=Occurrence), position=position_dodge(width=0.9), vjust=-0.4, size=4) +
-    geom_bar(stat = "identity", width=0.5, position = position_dodge(width=1), fill="#66bb6a")
+    geom_bar(stat = "identity", width=0.5, position = position_dodge(width=1), fill="#158504") +
+  ggsave("FrontPage.png", dpi=300)
+
+# Plotting for Companies which can give Full Page Ads
+ggplot(data = FullPageComp, aes(x = reorder(CompanyName, -Occurrence), y = Occurrence, ymax=max(Occurrence))) + 
+    scale_y_continuous(breaks = round(seq(0, max(50), by=2))) + 
+    themefunc() + 
+    xlab("Companies") +
+    ylab("Number of times Ad Occurred") +
+    ggtitle("Frequency of various Companies Giving Full Page Ads") +
+    geom_text(aes(label=Occurrence), position=position_dodge(width=0.9), vjust=0.5, size=4, hjust=-0.5) +
+    geom_bar(stat = "identity", width=0.5, position = position_dodge(width=), fill="#158504") +
+  coord_flip() +
+  ggsave("FullPage.png", dpi=300)
+
+#####
+
+# Making new Variables for the pie chart for Multiple Front Page Ads
+
+multiple <- data.frame(ns$Date, ns$Multiple.Front.Pages, ns$Total.Pages)
+names(multiple) <- c("Date", "Multiple Front Pages", "Total Pages")
+
+# Plotting the Pie Chart for Multiple Front Page Ads
+ggplot(data = multiple, aes(x = factor(1), fill=multiple$`Multiple Front Pages`)) +
+  geom_bar(width = 1) +
+  coord_polar(theta = "y") +
+  xlab("") + 
+  ylab("Multiple Front Page Ads Present") +
+  scale_fill_manual(values = c("#E24139", "#158504"),
+                    name = "",  # Name of the Graph
+                    breaks = c("No", "Yes"),  # Name of the legend
+                    labels = c("Not Present", "Present")) + 
+  scale_y_continuous(breaks = round(seq(0, max(0)))) +
+  themefunc()
