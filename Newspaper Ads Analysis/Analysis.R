@@ -2,6 +2,7 @@ library("ggplot2")
 library("reshape2")
 library("stringr")  # Library to strip the string
 library("plyr")
+library("dplyr")
 
 ns <- read.csv("NS.csv")  # Reading the CSV
 # Computing Days with Number of News Pages
@@ -17,7 +18,7 @@ themefunc <- function()
   return(themev)
 }
 
-#####
+#####Pages Composition####
 # Make a new data frame
 newsPages <- data.frame(ns$Date, ns$Full.Page.Ads, I(ns$Total.Pages - ns$Full.Page.Ads))
 # Rename the Columns
@@ -149,13 +150,16 @@ companiesFunction <- function(Variable)
 
   CompaniesCount <- data.frame(cname, cvalue)
   names(CompaniesCount) <- c("CompanyName", "Occurrence")  # Putting a name to the data frame
-  levels(CompaniesCount$CompanyName) <- gsub(" ", "\n", levels(CompaniesCount$CompanyName))  # To put a line break in the company names
+   # To put a line break in the company names
   return (CompaniesCount)
   
 }
 
 FrontPageComp <- companiesFunction("Front.Page.Ad.By")
 FullPageComp <- companiesFunction("Full.Page.Ads.By")
+
+#####Plotting of Companies#####
+levels(FrontPageComp$CompanyName) <- as.character(gsub(" ", "\n", levels(FrontPageComp$CompanyName)))
 
 # Plotting for Companies which gives ads on Front Page
 ggplot(data = FrontPageComp, aes(x = reorder(CompanyName, Occurrence), y = Occurrence, ymax=max(Occurrence))) + 
@@ -168,6 +172,7 @@ ggplot(data = FrontPageComp, aes(x = reorder(CompanyName, Occurrence), y = Occur
     geom_bar(stat = "identity", width=0.5, position = position_dodge(width=1), fill="#158504") +
   ggsave("FrontPage.png", dpi=300)
 
+
 # Plotting for Companies which can give Full Page Ads
 ggplot(data = FullPageComp, aes(x = reorder(CompanyName, -Occurrence), y = Occurrence, ymax=max(Occurrence))) + 
     scale_y_continuous(breaks = round(seq(0, max(50), by=2))) + 
@@ -176,26 +181,29 @@ ggplot(data = FullPageComp, aes(x = reorder(CompanyName, -Occurrence), y = Occur
     ylab("Number of times Ad Occurred") +
     ggtitle("Frequency of various Companies Giving Full Page Ads") +
     geom_text(aes(label=Occurrence), position=position_dodge(width=0.9), vjust=0.5, size=4, hjust=-0.5) +
-    geom_bar(stat = "identity", width=0.5, position = position_dodge(width=), fill="#158504") +
-  coord_flip() +
-  ggsave("FullPage.png", dpi=300)
+    geom_bar(stat = "identity", width=0.5, position = position_dodge(0.7), fill="#158504") +
+    coord_flip() +
+    ggsave("FullPage.png", dpi=300)
 
-#####
+#####Pie Chart for Multiple Front Page Ads#####
 
-# Making new Variables for the pie chart for Multiple Front Page Ads
-
+# Variables
 multiple <- data.frame(ns$Date, ns$Multiple.Front.Pages, ns$Total.Pages)
 names(multiple) <- c("Date", "Multiple Front Pages", "Total Pages")
+multiple$`Multiple Front Pages` <- factor(multiple$`Multiple Front Pages`, levels = rev(levels(multiple$`Multiple Front Pages`)))  # Changing the order of the levels
+multiple <- multiple %>% group_by(multiple$Date) %>% mutate(pos = cumsum(multiple$`Multiple Front Pages`)- multiple$`Multiple Front Pages`/2)
 
 # Plotting the Pie Chart for Multiple Front Page Ads
 ggplot(data = multiple, aes(x = factor(1), fill=multiple$`Multiple Front Pages`)) +
   geom_bar(width = 1) +
   coord_polar(theta = "y") +
   xlab("") + 
-  ylab("Multiple Front Page Ads Present") +
+  ylab("") +
   scale_fill_manual(values = c("#E24139", "#158504"),
                     name = "",  # Name of the Graph
                     breaks = c("No", "Yes"),  # Name of the legend
-                    labels = c("Not Present", "Present")) + 
+                    labels = c("Multiple Front Page Not Present", " Multiple Front Pages with Ads Present")) + 
   scale_y_continuous(breaks = round(seq(0, max(0)))) +
+  guides(fill = guide_legend(reverse=TRUE)) +  # Change the order of the legend
+  scale_x_discrete(breaks=NULL) +  # Remove the 
   themefunc()
