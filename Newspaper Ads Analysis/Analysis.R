@@ -41,7 +41,7 @@ ggplot(data = newsPages2, aes(x = Date, y = value, fill = variable)) +
   geom_text(aes(y=label_y, label=value), vjust=0.5, color='white', fontface=1, size=3) +  # Putting the labels
   themefunc() +
   ggtitle("Composition of Pages in the Newspaper") +
-  theme(plot.title = element_text(lineheight=.8, face="bold")) +
+  theme(plot.title = element_text(lineheight=.8, vjust = 1.5)) +
   coord_flip() +  # Flipping the graph
   ggsave("Ads.png", dpi=300) 
 
@@ -118,33 +118,37 @@ companiesFunction <- function(Variable)
     companies2 <- c(companies2, strsplit(as.character(companies[i, 1]), ",", fixed = TRUE))
   }
   allCompanies <- vector(mode="numeric", 0)  # Empty Vector to store companies
-
+  
   # Loop to get all the companies indivually 
   for (i in 1:length(companies2)){
     for (o in 1:length(companies2[[i]])){
       allCompanies <- c(allCompanies, str_trim(companies2[[i]][o]))
     }
   }
-
+  
   allCompanies <- data.frame(allCompanies)  # Converting to data frame
   allCompanies <- plyr::count(allCompanies, "allCompanies")  # Counting the number of companies
   
   # Making a new variable Bar Graph
   cname <- vector(mode = "character", length=0)
   cvalue <- vector(mode = "integer", length=0)
+  others <- vector(mode = "character", length=0)
   for (i in 1:nrow(allCompanies))
   {
-    if (allCompanies[i, 2] >= 2)
+    if (allCompanies[i, 2] <= 1)
+    {
+      others <- c(others, as.character(allCompanies[i, 1]))
+    }
+    else
     {
       cname <- c(cname, as.character(allCompanies[i, 1]))  # To put the company name
       cvalue[match(allCompanies[i, 1], cname)] = allCompanies[i, 2]  # To get the value of its occurance
     }
   }
-
   CompaniesCount <- data.frame(cname, cvalue)
   names(CompaniesCount) <- c("CompanyName", "Occurrence")  # Putting a name to the data frame
-   # To put a line break in the company names
-  return (CompaniesCount)
+  # To put a line break in the company names
+  return (list(CompaniesCount, others))  # Using list to return two values from this function
 }
 
 
@@ -152,10 +156,9 @@ FrontPageComp <- companiesFunction("Front.Page.Ad.By")
 FullPageComp <- companiesFunction("Full.Page.Ads.By")
 
 #####Plotting of Companies#####
-levels(FrontPageComp$CompanyName) <- as.character(gsub(" ", "\n", levels(FrontPageComp$CompanyName)))
 
 # Plotting for Companies which gives ads on Front Page
-ggplot(data = FrontPageComp, aes(x = reorder(CompanyName, Occurrence), y = Occurrence, ymax=max(Occurrence))) + 
+ggplot(data = FrontPageComp[[1]], aes(x = reorder(CompanyName, Occurrence), y = Occurrence, ymax=max(Occurrence))) + 
     scale_y_continuous(breaks = round(seq(0, max(30), by=2))) + 
     themefunc() + 
     xlab("Companies") +
@@ -163,11 +166,11 @@ ggplot(data = FrontPageComp, aes(x = reorder(CompanyName, Occurrence), y = Occur
     ggtitle("Frequency of various Companies occurring on 1st Page") +
     geom_text(aes(label=Occurrence), position=position_dodge(width=0.9), vjust=-0.4, size=5) +
     geom_bar(stat = "identity", position = position_dodge(width = 0.1), width=0.69, fill="#2E7D32") +
-  ggsave("FrontPage.png", dpi=300)
+    ggsave("FrontPage.png", dpi=300)
 
 
 # Plotting for Companies which can give Full Page Ads
-ggplot(data = FullPageComp, aes(x = reorder(CompanyName, -Occurrence), y = Occurrence, ymax=max(Occurrence))) + 
+ggplot(data = FullPageComp[[1]], aes(x = reorder(CompanyName, -Occurrence), y = Occurrence, ymax=max(Occurrence))) + 
     scale_y_continuous(breaks = round(seq(0, max(50), by=3))) + 
     themefunc() + 
     xlab("Companies") +
@@ -181,22 +184,19 @@ ggplot(data = FullPageComp, aes(x = reorder(CompanyName, -Occurrence), y = Occur
 #####Pie Chart for Multiple Front Page Ads#####
 
 # Variables
-multiple <- data.frame(ns$Date, ns$Multiple.Front.Pages, ns$Total.Pages)
-names(multiple) <- c("Date", "Multiple Front Pages", "Total Pages")
-multiple$`Multiple Front Pages` <- factor(multiple$`Multiple Front Pages`, levels = rev(levels(multiple$`Multiple Front Pages`)))  # Changing the order of the levels
-multiple <- multiple %>% group_by(multiple$Date) %>% mutate(pos = cumsum(multiple$`Multiple Front Pages`)- multiple$`Multiple Front Pages`/2)
+multiple <- data.frame(plyr::count(ns$Multiple.Front.Pages)[1], round(plyr::count(ns$Multiple.Front.Pages)[2] / sum(plyr::count(ns$Multiple.Front.Pages)[2]) * 100, 0))
+names(multiple) <- c("Multiple Front Pages", "Percentage")
 
 # Plotting the Pie Chart for Multiple Front Page Ads
-ggplot(data = multiple, aes(x = factor(1), fill=multiple$`Multiple Front Pages`)) +
-  geom_bar(width = 1) +
-  coord_polar(theta = "y") +
-  xlab("") + 
+ggplot(data = b, aes(x = variable, y = value, fill = b$`Multiple Front Pages`)) +
+  geom_bar(stat = "identity", width = 0.07) +
   ylab("") +
-  scale_fill_manual(values = c("#E24139", "#158504"),
+  xlab("") +
+  scale_fill_manual(values = c("#424242", "#2E7D32"),
                     name = "",  # Name of the Graph
                     breaks = c("No", "Yes"),  # Name of the legend
                     labels = c("Multiple Front Page Not Present", " Multiple Front Pages with Ads Present")) + 
-  scale_y_continuous(breaks = round(seq(0, max(0)))) +
-  guides(fill = guide_legend(reverse=TRUE)) +  # Change the order of the legend
-  scale_x_discrete(breaks=NULL) +  # Remove the 
-  themefunc()
+  theme(legend.position="none") +  # Change the order of the legend
+  coord_flip() +
+  themefunc() + 
+  ggsave("Percentage.png", dpi = 300, width = 3, height = 1)
