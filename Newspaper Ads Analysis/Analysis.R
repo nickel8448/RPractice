@@ -43,7 +43,7 @@ ggplot(data = newsPages2, aes(x = Date, y = value, fill = variable)) +
   ggtitle("Composition of Pages in the Newspaper") +
   theme(plot.title = element_text(lineheight=.8, vjust = 1.5)) +
   coord_flip() +  # Flipping the graph
-  ggsave("Ads.png", dpi=300)
+  ggsave("Ads.png", dpi=400)
 
 #####
 
@@ -93,7 +93,8 @@ meltedAllDayAds$WDay <- factor(meltedAllDayAds$WDay, levels= c("Sunday", "Monday
 meltedAllDayAds[order(meltedAllDayAds$WDay), ]
 ggplot(meltedAllDayAds, aes(x = WDay, y = value, fill = variable)) +
   geom_bar(stat = "identity", width = 0.75) +
-  ylab("Total Pages") +
+  ggtitle("Composition of Pages as per Day of the Week (Average)") +
+  ylab("Total Number of Pages") +
   xlab("Day of the Week") +
   scale_fill_manual(values = c("#424242", "#2E7D32"),  # Changing the colour of the bars
                     name = "Pages Composition",
@@ -102,7 +103,7 @@ ggplot(meltedAllDayAds, aes(x = WDay, y = value, fill = variable)) +
   geom_text(aes(y=label_y, label=value), vjust=0.5, color='white', fontface=1, size=5) +  # Putting the labels
   themefunc() +
   guides(fill = guide_legend(reverse=TRUE)) +  # To reverse the order of the legend
-  ggsave('Days.png', dpi=300)
+  ggsave('Days.png', dpi=400)
 
 #####
 
@@ -153,7 +154,9 @@ companiesFunction <- function(Variable)
 
 
 FrontPageComp <- companiesFunction("Front.Page.Ad.By")
+write.csv(FrontPageComp[[2]], "Front Page Other CSV.csv")
 FullPageComp <- companiesFunction("Full.Page.Ads.By")
+write.csv(as.character(FullPageComp[[2]]), "Full Page Other CSV.csv")
 
 #####Plotting of Companies#####
 
@@ -163,10 +166,10 @@ ggplot(data = FrontPageComp[[1]], aes(x = reorder(CompanyName, Occurrence), y = 
   themefunc() + 
   xlab("Companies") +
   ylab("Number of times Ad Occurred") +
-  ggtitle("Frequency of various Companies occurring on 1st Page") +
+  ggtitle("Frequency of Companies Giving 1st Page Ads") +
   geom_text(aes(label=Occurrence), position=position_dodge(width=0.9), vjust=-0.4, size=5) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.1), width=0.69, fill="#2E7D32") +
-  ggsave("FrontPage.png", dpi=300)
+  ggsave("FrontPage.png", dpi=400)
 
 
 # Plotting for Companies which can give Full Page Ads
@@ -175,11 +178,11 @@ ggplot(data = FullPageComp[[1]], aes(x = reorder(CompanyName, -Occurrence), y = 
   themefunc() + 
   xlab("Companies") +
   ylab("Number of times Ad Occurred") +
-  ggtitle("Frequency of various Companies Giving Full Page Ads") +
+  ggtitle("Frequency of Companies Giving Full Page Ads") +
   geom_text(aes(label=Occurrence), position=position_dodge(width=0.9), vjust=0.5, size=4, hjust=-0.5) +
   geom_bar(stat = "identity", width=0.6, position = position_dodge(0.2), fill="#2E7D32") +
   coord_flip() +
-  ggsave("FullPage.png", dpi=300)
+  ggsave("FullPage.png", dpi=400)
 
 #####Pie Chart for Multiple Front Page Ads#####
 
@@ -187,15 +190,13 @@ ggplot(data = FullPageComp[[1]], aes(x = reorder(CompanyName, -Occurrence), y = 
 multiple <- data.frame(plyr::count(ns$Multiple.Front.Pages)[1], round(plyr::count(ns$Multiple.Front.Pages)[2] / sum(plyr::count(ns$Multiple.Front.Pages)[2]) * 100, 0))
 names(multiple) <- c("Pages", "Percentage")
 multiple <- melt(multiple)
-multiple <- ddply(multiple, "Pages", mutate, label_y = cumsum(value) - .5*value)
 # Plotting the Pie Chart for Multiple Front Page Ads
 ggplot(data = multiple, aes(x = variable, y = value, fill = Pages)) +
   geom_bar(stat = "identity", width = 0.09) +
   ylab("") +
   xlab("") +
-  ggtitle("Days Composition") +
   scale_fill_manual(values = c("#424242", "#2E7D32")) +
-  geom_text(aes(y=c(20.5, 70), label=c("Multiple Page Ads Not Present\n 41%", "Multiple Page Ads Present\n 59%")), color='white', fontface=1, size=4.5) +  # Using Customized line here. Can be changed #
+  geom_text(aes(y=c(20.5, 70), label=c("Multiple Front Page Ads Not Present\n 41%", "Multiple Front Page Ads Present\n 59%")), color='white', fontface=1, size=4.5) +  # Using Customized line here. Can be changed #
   theme(legend.position="none",
         axis.title.y = element_blank(),
         axis.text.y = element_blank(),
@@ -206,4 +207,4 @@ ggplot(data = multiple, aes(x = variable, y = value, fill = Pages)) +
         panel.grid.minor=element_blank(),
         plot.title = element_text(vjust = -32.5, size = 16)) +  # Change the order of the legend
   coord_flip() +
-  ggsave("Percentage.png", dpi = 300)
+  ggsave("Percentage.png", dpi = 400)
