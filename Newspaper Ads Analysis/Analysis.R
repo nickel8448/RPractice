@@ -18,6 +18,19 @@ themefunc <- function()
   return(themev)
 }
 
+#####Line Graph#####
+lineg <- data.frame(ns$Date, ns$Full.Page.Ads)
+names(lineg) <- c("Date", "PageAds")
+lineg <- transform(lineg, Date = reorder(Date, order(as.Date(lineg$Date, format="%d/%m/%Y"), decreasing = FALSE)))
+ggplot(lineg, aes(x = Date, y = PageAds, group = 1)) +
+  geom_line(colour = "#2E7D32", size = 0.8) + 
+  ylab("Number of Full Page Advertisements") +
+  geom_point(size = 3) + 
+  scale_y_continuous(breaks = round(seq(1, max(18), by=1))) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  themefunc() +
+  ggsave("LineGraph.png", dpi = 400)
+
 #####Pages Composition####
 # Make a new data frame
 newsPages <- data.frame(ns$Date, ns$Full.Page.Ads, I(ns$Total.Pages - ns$Full.Page.Ads))
