@@ -15,3 +15,7 @@ ggplot(location, aes(x=Location, y=freq, ymax=max(location$freq))) +
   geom_text(aes(label=freq), position=position_dodge(width=0.9), vjust=-0.40, size=3) +
   scale_y_continuous(breaks = round(seq(0, max(location$freq), by=20)), "Number of People") +  # Chanding the scale
   ggsave("plot.png", dpi=300)
+
+sorteddata <- location[order(-location$freq), ]
+names(sorteddata) <- c("State", "Number of People")
+write.csv(sorteddata, file = "States.csv", row.names = FALSE)
