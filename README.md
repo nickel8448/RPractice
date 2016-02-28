@@ -12,3 +12,6 @@ As per the analysis I found out that most people are selected from the State of 
 
 This is to check how many pages Times of India (Hyderabad Edition) is selling everyday in their newspaper. 
 I collected the data personally by going through the newspaper. This does not include Hyderabad Times.
+
+TODO 
+- [] Check both the projects with an R linter
